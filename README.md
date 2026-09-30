@@ -15,7 +15,8 @@ credentials, and a Cloud API access token. Use a system-user token with
 `whatsapp_business_messaging` and `whatsapp_business_management`.
 
 ```console
-$ forge tool add ./forge-whatsapp                            # a local checkout
+$ git clone https://github.com/richardwooding/forge-whatsapp
+$ forge tool add ./forge-whatsapp
 $ forge secret set whatsapp-token --host graph.facebook.com  # prompts, no echo
 $ forge grant allow whatsapp
 $ forge whatsapp configure --phone_number_id 1234567890 --waba_id 9876543210
