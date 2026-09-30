@@ -45,7 +45,8 @@ func hintFor(code int) string {
 	switch code {
 	case 190:
 		return "The access token is invalid or has expired. Store a new one with:\n" +
-			"    forge secret set " + tokenSecret + " --host " + graphHost
+			"    forge secret set " + tokenSecret + " --host " + graphHost + " --host lookaside.fbsbx.com\n" +
+			"(the second host is where whatsapp-media downloads received media)"
 	case 10, 200:
 		return "The token lacks a permission this call needs; a system-user token needs " +
 			"whatsapp_business_messaging and whatsapp_business_management."

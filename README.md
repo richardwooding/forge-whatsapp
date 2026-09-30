@@ -5,26 +5,29 @@ A [forge](https://github.com/richardwooding/forge) tool for Meta's
 Once it's installed, every forge surface can use it: CLI, REPL, MCP, REST and gRPC.
 
 It sends messages from a business number and reads the account's templates,
-phone numbers and profile. It does not receive messages: those arrive by
-webhook, which needs a server listening for them.
+phone numbers and profile. A companion tool, [`whatsapp-media`](#whatsapp-media),
+uploads local files and saves received media. Neither receives messages: those
+arrive by webhook, which needs a server listening for them.
 
 ## Setup
 
 You need forge v0.13.0 or later (`brew install --cask richardwooding/tap/forge`),
-which is what adds host-attached credentials, and a Cloud API access token. Use a system-user token with
-`whatsapp_business_messaging` and `whatsapp_business_management`.
+which is what adds host-attached credentials, and a Cloud API access token. Use
+a system-user token with `whatsapp_business_messaging` and
+`whatsapp_business_management`.
 
 ```console
 $ git clone https://github.com/richardwooding/forge-whatsapp
 $ forge tool add ./forge-whatsapp
-$ forge secret set whatsapp-token --host graph.facebook.com  # prompts, no echo
+$ forge secret set whatsapp-token --host graph.facebook.com --host lookaside.fbsbx.com
 $ forge grant allow whatsapp
 $ forge whatsapp configure --phone_number_id 1234567890 --waba_id 9876543210
 ```
 
-`--host` binds the token to `graph.facebook.com`. forge attaches it to requests
-itself, and the tool never sees the value: forge refuses to send it anywhere
-else or to hand it to any tool to read. If Meta echoes the token back in an
+`--host` binds the token to Meta's API host, and to the host WhatsApp serves
+received media from (only `whatsapp-media` needs the second). forge attaches it
+to requests itself, and the tool never sees the value: forge refuses to send it
+anywhere else or to hand it to any tool to read. If Meta echoes the token back in an
 error, forge redacts it before the tool sees the response.
 
 The tool asks for:
@@ -69,10 +72,51 @@ messages. The tool says so when Meta refuses a free-form message (error
 131047), and gives similar hints for expired tokens, missing permissions,
 template mismatches and rate limits.
 
+## whatsapp-media
+
+A second tool in [`media/`](media), kept separate because forge grants
+capabilities per tool: if the file access lived in `whatsapp`, every send would
+need it too.
+
+```console
+$ forge tool add ./forge-whatsapp/media
+$ forge grant allow whatsapp-media --scope fs.read=$HOME/whatsapp/outbox \
+                                   --scope fs.write=$HOME/whatsapp/inbox
+
+$ forge whatsapp-media upload --path $HOME/whatsapp/outbox/invoice.pdf
+{"media_id":"1234567890","kind":"document","mime_type":"application/pdf","bytes":48213}
+$ forge whatsapp send_media --to +27821234567 --kind document --media_id 1234567890 \
+    --filename invoice.pdf
+
+$ forge whatsapp-media download --media_id 9876543210 --path $HOME/whatsapp/inbox
+{"path":".../inbox/9876543210.jpg","mime_type":"image/jpeg","bytes":81234,"sha256":"..."}
+```
+
+| Operation | Does |
+|---|---|
+| `upload` | uploads a local file and returns its `media_id`, inferring the type from the extension (or `mime_type`) |
+| `download` | saves received media to a file or a directory, refusing it if the SHA-256 doesn't match |
+| `delete` | deletes uploaded media |
+
+- **Paths** must be absolute and inside a granted directory. A tool can't know
+  your directories in advance, so it declares `*`, and forge refuses that until
+  you narrow it with `--scope`.
+- **Defaults** come from `whatsapp configure`, which `whatsapp-media` calls.
+  That's why it asks for `tool.invoke(whatsapp)` and `kv(config)`: forge only
+  lets a tool call another with capabilities it holds itself. With
+  `phone_number_id` passed, it works even when `whatsapp` isn't installed.
+- **Limits:**
+  - WhatsApp's own: images 5 MiB, audio and video 16 MiB, stickers 500 KiB,
+    documents 100 MiB.
+  - forge's per-call allowance caps uploads at 40 MiB, and its response limit
+    caps downloads at 16 MiB.
+- Uploaded media lasts 30 days. A received media URL lasts only minutes, so
+  `download` fetches a fresh one each time.
+
 ## Development
 
 ```console
-$ go test ./...
+$ go test ./... && (cd media && go test ./...)
 $ FORGE_SDK_DIR=../forge/sdk forge tool add .   # against a local forge SDK
 ```
 

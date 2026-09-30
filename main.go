@@ -39,7 +39,7 @@ type MediaArgs struct {
 	To       string `json:"to" jsonschema:"recipient phone number in international format"`
 	Kind     string `json:"kind" jsonschema:"image, video, document, audio or sticker"`
 	Link     string `json:"link,omitempty" jsonschema:"public https URL of the media; give this or media_id"`
-	MediaID  string `json:"media_id,omitempty" jsonschema:"ID of media already uploaded to WhatsApp; give this or link"`
+	MediaID  string `json:"media_id,omitempty" jsonschema:"ID of media already uploaded to WhatsApp, e.g. by whatsapp-media upload; give this or link"`
 	Caption  string `json:"caption,omitempty" jsonschema:"caption, for image, video and document"`
 	Filename string `json:"filename,omitempty" jsonschema:"file name shown for a document"`
 	ReplyTo  string `json:"reply_to,omitempty" jsonschema:"ID of a message to quote in reply"`
@@ -195,7 +195,7 @@ type MediaInfo struct {
 var _ = tool.Register(
 	tool.Spec{
 		Name:    "whatsapp",
-		Version: "0.1.0",
+		Version: "0.1.1",
 		Summary: "Send and manage messages through the WhatsApp Business Cloud API",
 		UseWhen: "you need to send a WhatsApp message from a business number, or look up its templates, " +
 			"phone numbers or profile; not for reading incoming messages, which arrive by webhook",
