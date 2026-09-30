@@ -10,8 +10,8 @@ webhook, which needs a server listening for them.
 
 ## Setup
 
-You need forge built with SDK v0.4.0 or later, which is what adds host-attached
-credentials, and a Cloud API access token. Use a system-user token with
+You need forge v0.13.0 or later (`brew install --cask richardwooding/tap/forge`),
+which is what adds host-attached credentials, and a Cloud API access token. Use a system-user token with
 `whatsapp_business_messaging` and `whatsapp_business_management`.
 
 ```console
